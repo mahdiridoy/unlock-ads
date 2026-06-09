@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<meta name="monetag" content="f49efa0948ae86e99d724c55ed770b7e">
 <script src="https://quge5.com/88/tag.min.js" data-zone="247973" async data-cfasync="false"></script>
-  <meta name="monetag" content="f49efa0948ae86e99d724c55ed770b7e">
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
@@ -19,7 +19,7 @@
   --txt:#eeeef8;--dim:#7878a0;--bdr:rgba(255,255,255,.07);
   --sw:320px;
 }
-html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;-webkit-font-smoothing:antialiased}
+html,body{height:100%;overflow:auto;background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;-webkit-font-smoothing:antialiased;-webkit-overflow-scrolling:touch}
 ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--cardh);border-radius:4px}
 
 /* ── SPLASH ── */
@@ -160,27 +160,27 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--txt);font
 
 /* ── MOBILE ── */
 @media(max-width:720px){
-  #sidebar{
-    position:fixed!important;
-    top:0;
-    left:0;
-    height:100vh!important;
-    width:85%!important;
-    max-width:340px;
-    transform:translateX(-100%);
-    z-index:999;
-    transition:transform .3s ease;
-  }
-  .sb-open #sidebar{transform:translateX(0)!important;}
-  #player{height:100vh!important;}
-  #tv-btn{display:flex!important;}
-
-  #app{flex-direction:column}
-  #sidebar{width:100%!important;min-width:100%!important;height:48vh;order:2;border-right:none;border-top:1px solid var(--bdr)}
-  #player{height:52vh;order:1}
-  .tv-mode #sidebar{position:static!important;transform:none!important;height:48vh}
-  #tv-btn{display:none!important}
-  .hints{display:none}
+html,body{overflow:auto!important;height:auto!important;-webkit-overflow-scrolling:touch;}
+#app{display:block!important;height:100vh!important;}
+#player{position:fixed!important;inset:0!important;width:100%!important;height:100vh!important;}
+#sidebar{
+position:fixed!important;
+left:0;top:0;
+width:85%!important;
+max-width:340px;
+height:100vh!important;
+overflow-y:auto!important;
+-webkit-overflow-scrolling:touch;
+transform:translateX(-100%);
+z-index:9999;
+transition:transform .3s ease;
+}
+.sb-open #sidebar{transform:translateX(0)!important;}
+#tv-btn{display:flex!important;position:fixed;top:10px;left:10px;z-index:10000;}
+#cats{overflow-x:auto!important;-webkit-overflow-scrolling:touch;}
+#chlist{overflow-y:auto!important;-webkit-overflow-scrolling:touch;}
+.cat{flex-shrink:0;}
+.hints{display:none;}
 }
 /* ── LARGE SCREENS ── */
 @media(min-width:1920px){:root{--sw:380px}.ch-n{font-size:15px}.cat{font-size:12px}}
