@@ -13,7 +13,6 @@
   <meta name="keywords" content="iptv, live tv, streaming, ridoyiptv, free iptv"/>
   <title>RidoyIPTV - Premium Live TV Streaming</title>
   
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.4.12/hls.min.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;600;700;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
   
@@ -323,16 +322,8 @@ const PROXIES = [
   u => u,
 ];
 
-// CORS proxies to try for stream URLs
-const STREAM_PROXIES = [
-  u => u,
-  u => `https://corsproxy.io/?${encodeURIComponent(u)}`,
-  u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
-  u => `https://thingproxy.freeboard.io/fetch/${u}`,
-];
-
 let ALL = [], FIL = [], CAT = 'All', CUR = -1;
-let hls = null, ctrlTmr = null, osdTmr = null, osdStr = '', tvMode = false, refreshTimer = null;
+let ctrlTmr = null, osdTmr = null, osdStr = '', tvMode = false, refreshTimer = null;
 
 const $ = id => document.getElementById(id);
 const splash = $('splash'), app = $('app'), vid = $('vid'), search = $('search');
@@ -531,57 +522,42 @@ function playIdx(i) {
   CUR = i;
   localStorage.setItem('ridoy_last', i);
   welcome.classList.add('hide');
-  hideErr(); showLoad(ch.name); renderList();
+  hideErr(); renderList();
 
   $('c-name').textContent = ch.name;
   $('c-grp').textContent = ch.group;
   document.title = `${ch.name} — RidoyIPTV`;
   const lg = $('clg');
   lg.src = ch.logo || ''; lg.style.display = ch.logo ? '' : 'none';
-  syncVol();
 
-  if (hls) { hls.destroy(); hls = null; }
-  vid.removeAttribute('src'); vid.load();
-
-  // Upgrade HTTP->HTTPS to avoid mixed-content blocks on mobile
-  const rawUrl = ch.url.replace(/^http:\/\//i, 'https://');
-  let streamProxyIdx = 0;
-
-  function tryStream(url) {
-    if (hls) { hls.destroy(); hls = null; }
-    function nextProxy() {
-      streamProxyIdx++;
-      if (streamProxyIdx < STREAM_PROXIES.length) {
-        tryStream(STREAM_PROXIES[streamProxyIdx](rawUrl));
-      } else {
-        showErr();
-      }
-    }
-    if (Hls.isSupported()) {
-      hls = new Hls({
-        enableWorker: true, lowLatencyMode: true,
-        backBufferLength: 25, maxBufferLength: 30,
-        manifestLoadingTimeOut: 10000, manifestLoadingMaxRetry: 1,
-        levelLoadingTimeOut: 10000,
-      });
-      hls.loadSource(url);
-      hls.attachMedia(vid);
-      hls.on(Hls.Events.MANIFEST_PARSED, () => vid.play().catch(()=>{}));
-      hls.on(Hls.Events.ERROR, (_, d) => { if (d.fatal) { hls.destroy(); hls = null; nextProxy(); } });
-    } else {
-      vid.src = url;
-      vid.play().catch(() => nextProxy());
-    }
-  }
-
-  tryStream(STREAM_PROXIES[streamProxyIdx](rawUrl));
-
-  vid.onwaiting = () => showLoad(ch.name);
-  vid.onplaying = () => hideLoad();
-  vid.onerror = () => showErr();
+  // Open stream in external player (VLC)
+  const streamUrl = ch.url;
+  showLoad(`Opening "${ch.name}" in VLC…`);
+  openInExternalPlayer(streamUrl);
 
   showCtrl(4500);
   if (tvMode) app.classList.remove('sb-open');
+}
+
+function openInExternalPlayer(url) {
+  const cleanUrl = url.replace(/^http:\/\//i, 'https://');
+
+  // Try VLC protocol handler
+  try {
+    const a = document.createElement('a');
+    a.href = 'vlc://' + cleanUrl;
+    a.style.display = 'none';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  } catch(e) {}
+
+  // Fallback: open stream URL in new tab
+  setTimeout(() => {
+    const w = window.open(cleanUrl, '_blank');
+    if (!w) toast('Popup blocked. Allow popups for instant stream opening.');
+    hideLoad();
+  }, 600);
 }
 
 function retry() { if (CUR >= 0) playIdx(CUR); }
@@ -600,9 +576,7 @@ player.addEventListener('mousemove', () => { if (CUR >= 0) showCtrl(); });
 vid.addEventListener('click', () => ctrl.classList.contains('vis') ? ctrl.classList.remove('vis') : showCtrl());
 
 function togglePP() {
-  if (vid.paused) vid.play().then(() => updPP(true));
-  else vid.pause(), updPP(false);
-  showCtrl();
+  toast('Open stream in VLC player');
 }
 function updPP(p) { $('pp').textContent = p ? '⏸' : '▶'; }
 function toggleMute() { vid.muted = !vid.muted; $('mb').textContent = vid.muted ? '🔇' : '🔊'; }
