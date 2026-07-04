@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Watch Ads to Unlock</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<!-- Monetag SDK — main zone -->
+<script src='//libtl.com/sdk.js' data-zone='11237862' data-sdk='show_11237862'></script>
+<style>
+  body {
+    font-family: -apple-system, Roboto, Arial, sans-serif;
+    background: var(--tg-theme-bg-color, #ffffff);
+    color: var(--tg-theme-text-color, #111111);
+    text-align: center;
+    padding: 24px 16px;
+    margin: 0;
+  }
+  h2 { margin-bottom: 4px; }
+  #progress { font-size: 18px; margin: 16px 0; }
+  button {
+    background: var(--tg-theme-button-color, #2ea6ff);
+    color: var(--tg-theme-button-text-color, #ffffff);
+    border: none;
+    border-radius: 10px;
+    padding: 14px 24px;
+    font-size: 16px;
+    width: 100%;
+    max-width: 320px;
+    margin-top: 16px;
+    cursor: pointer;
+  }
+  button:disabled { opacity: 0.5; }
+  #status { margin-top: 16px; font-size: 14px; color: #888; min-height: 20px; }
+</style>
+</head>
+<body>
+
+<h2>🎬 Watch Ads to Unlock</h2>
+<div id="progress">Ad 0 / 5 watched</div>
+<button id="watchBtn">▶️ Watch Ad</button>
+<div id="status"></div>
+
+<script>
+  const tg = window.Telegram?.WebApp;
+  if (tg) { tg.ready(); tg.expand(); }
+
+  // Identify the user. Prefer Telegram's WebApp user id (secure context),
+  // fall back to a "uid" query param if the bot passed one manually.
+  const urlParams = new URLSearchParams(window.location.search);
+  const telegramUser = tg?.initDataUnsafe?.user;
+  const userId = telegramUser?.id || urlParams.get("uid");
+
+  const ADS_REQUIRED = 5;
+  const POSTBACK_BASE = "https://YOUR_BACKEND_DOMAIN"; // <-- set this to your deployed postback server
+  let watched = parseInt(sessionStorage.getItem("ads_watched") || "0", 10);
+
+  const progressEl = document.getElementById("progress");
+  const statusEl = document.getElementById("status");
+  const btn = document.getElementById("watchBtn");
+
+  function renderProgress() {
+    progressEl.textContent = `Ad ${watched} / ${ADS_REQUIRED} watched`;
+    if (watched >= ADS_REQUIRED) {
+      btn.disabled = true;
+      btn.textContent = "✅ All ads watched!";
+      statusEl.textContent = "Go back to the bot and tap 'Check my progress'.";
+      if (tg) setTimeout(() => tg.close(), 2500);
+    }
+  }
+  renderProgress();
+
+  async function notifyBackend() {
+    // This is a client-side notice for instant UI feedback only.
+    // The AUTHORITATIVE record comes from Monetag's server-to-server postback,
+    // configured in your Monetag dashboard to hit /monetag_postback on your backend.
+    try {
+      await fetch(`${POSTBACK_BASE}/client_ad_ping?user_id=${encodeURIComponent(userId)}`, {
+        method: "POST",
+      });
+    } catch (e) {
+      console.warn("Backend ping failed (non-fatal):", e);
+    }
+  }
+
+  btn.addEventListener("click", () => {
+    if (typeof show_11237862 !== "function") {
+      statusEl.textContent = "Ad SDK not loaded yet — please wait a moment and try again.";
+      return;
+    }
+    btn.disabled = true;
+    statusEl.textContent = "Loading ad...";
+
+    show_11237862({ ymid: String(userId || "unknown") })
+      .then(() => {
+        watched += 1;
+        sessionStorage.setItem("ads_watched", String(watched));
+        statusEl.textContent = "✅ Ad completed!";
+        notifyBackend();
+        renderProgress();
+        btn.disabled = watched >= ADS_REQUIRED;
+      })
+      .catch((err) => {
+        statusEl.textContent = "⚠️ Ad failed or was skipped — try again.";
+        console.warn(err);
+        btn.disabled = false;
+      });
+  });
+</script>
+</body>
+</html>
