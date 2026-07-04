@@ -51,7 +51,7 @@
   const telegramUser = tg?.initDataUnsafe?.user;
   const userId = telegramUser?.id || urlParams.get("uid");
 
-  const ADS_REQUIRED = 5;
+  const ADS_REQUIRED = 10;
   const POSTBACK_BASE = "https://unlock-bot-xieo.onrender.com";
   let watched = parseInt(sessionStorage.getItem("ads_watched") || "0", 10);
 
