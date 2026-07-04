@@ -52,7 +52,7 @@
   const userId = telegramUser?.id || urlParams.get("uid");
 
   const ADS_REQUIRED = 5;
-  const POSTBACK_BASE = "https://YOUR_BACKEND_DOMAIN"; // <-- set this to your deployed postback server
+  const POSTBACK_BASE = "https://unlock-bot.onrender.com"; // <-- set this to your deployed postback server
   let watched = parseInt(sessionStorage.getItem("ads_watched") || "0", 10);
 
   const progressEl = document.getElementById("progress");
