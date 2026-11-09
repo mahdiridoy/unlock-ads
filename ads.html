@@ -83,29 +83,54 @@
     }
   }
 
-  btn.addEventListener("click", () => {
+  let running = false;
+
+  async function runAds() {
+    if (running || watched >= ADS_REQUIRED) return;
     if (typeof show_12223543 !== "function") {
       statusEl.textContent = "Ad SDK not loaded yet — please wait a moment and try again.";
       return;
     }
+    running = true;
     btn.disabled = true;
-    statusEl.textContent = "Loading ad...";
 
-    show_12223543({ ymid: String(userId || "unknown") })
-      .then(() => {
+    while (watched < ADS_REQUIRED) {
+      statusEl.textContent = `Loading ad ${watched + 1} of ${ADS_REQUIRED}...`;
+      try {
+        await show_12223543({ ymid: String(userId || "unknown") });
         watched += 1;
         sessionStorage.setItem("ads_watched", String(watched));
-        statusEl.textContent = "✅ Ad completed!";
+        statusEl.textContent = `✅ Ad ${watched} of ${ADS_REQUIRED} completed!`;
         notifyBackend();
         renderProgress();
-        btn.disabled = watched >= ADS_REQUIRED;
-      })
-      .catch((err) => {
-        statusEl.textContent = "⚠️ Ad failed or was skipped — try again.";
+      } catch (err) {
+        statusEl.textContent = "⚠️ Ad failed or was skipped — tap to retry.";
         console.warn(err);
+        running = false;
         btn.disabled = false;
-      });
-  });
+        return;
+      }
+    }
+
+    running = false;
+    btn.disabled = true;
+    btn.textContent = "✅ All ads watched!";
+    statusEl.textContent = "Closing...";
+    if (tg) setTimeout(() => tg.close(), 1200);
+  }
+
+  btn.addEventListener("click", runAds);
+
+  // Auto-start once the SDK is ready so the user doesn't have to tap.
+  function tryAutoStart(attempts = 0) {
+    if (watched >= ADS_REQUIRED) return;
+    if (typeof show_12223543 === "function") {
+      runAds();
+    } else if (attempts < 10) {
+      setTimeout(() => tryAutoStart(attempts + 1), 500);
+    }
+  }
+  setTimeout(() => tryAutoStart(), 800);
 </script>
 </body>
 </html>
