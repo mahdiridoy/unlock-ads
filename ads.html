@@ -6,7 +6,7 @@
 <title>Watch Ads to Unlock</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <!-- Monetag SDK — main zone -->
-<script src='//libtl.com/sdk.js' data-zone='11237862' data-sdk='show_11237862'></script>
+<script src='//libtl.com/sdk.js' data-zone='12223543' data-sdk='show_12223543'></script>
 <style>
   body {
     font-family: -apple-system, Roboto, Arial, sans-serif;
@@ -37,7 +37,7 @@
 <body>
 
 <h2>🎬 Watch Ads to Unlock</h2>
-<div id="progress">Ad 0 / 5 watched</div>
+<div id="progress">Ad 0 / 2 watched</div>
 <button id="watchBtn">▶️ Watch Ad</button>
 <div id="status"></div>
 
@@ -51,7 +51,7 @@
   const telegramUser = tg?.initDataUnsafe?.user;
   const userId = telegramUser?.id || urlParams.get("uid");
 
-  const ADS_REQUIRED = 10;
+  const ADS_REQUIRED = 2;
   const POSTBACK_BASE = "https://unlock-bot-xieo.onrender.com";
   let watched = parseInt(sessionStorage.getItem("ads_watched") || "0", 10);
 
@@ -84,14 +84,14 @@
   }
 
   btn.addEventListener("click", () => {
-    if (typeof show_11237862 !== "function") {
+    if (typeof show_12223543 !== "function") {
       statusEl.textContent = "Ad SDK not loaded yet — please wait a moment and try again.";
       return;
     }
     btn.disabled = true;
     statusEl.textContent = "Loading ad...";
 
-    show_11237862({ ymid: String(userId || "unknown") })
+    show_12223543({ ymid: String(userId || "unknown") })
       .then(() => {
         watched += 1;
         sessionStorage.setItem("ads_watched", String(watched));
