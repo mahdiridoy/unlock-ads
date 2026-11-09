@@ -86,9 +86,12 @@
   }
 
   async function notifyBackend() {
-    // Log-only notice. The real count comes from Monetag's server postback.
+    // Sends Telegram's signed initData so the server can verify who finished the ad.
     try {
-      await fetch(`${POSTBACK_BASE}/client_ad_ping?user_id=${encodeURIComponent(userId)}`, { method: "POST" });
+      await fetch(`${POSTBACK_BASE}/client_ad_ping`, {
+        method: "POST",
+        body: new URLSearchParams({ init_data: tg?.initData || "" }),
+      });
     } catch (e) { console.warn("Backend ping failed (non-fatal):", e); }
   }
 
@@ -106,8 +109,8 @@
     const before = watched;
     try {
       await show_12223543({ ymid: String(userId) });
-      notifyBackend();
       statusEl.textContent = "Checking your ad...";
+      await notifyBackend();
       // Wait for Monetag's postback to reach the server (up to ~12s).
       for (let i = 0; i < 6; i++) {
         await new Promise((r) => setTimeout(r, 2000));
