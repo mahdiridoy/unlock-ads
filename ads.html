@@ -99,7 +99,7 @@
       try {
         await Promise.race([
           show_12223543({ ymid: String(userId || "unknown") }),
-          new Promise((_, reject) => setTimeout(() => reject(new Error("ad timeout")), 16000)),
+          new Promise((_, reject) => setTimeout(() => reject(new Error("ad timeout")), 30000)),
         ]);
         watched += 1;
         sessionStorage.setItem("ads_watched", String(watched));
@@ -109,12 +109,15 @@
         // Give the SDK time to tear down the previous overlay before next.
         if (watched < ADS_REQUIRED) await new Promise((r) => setTimeout(r, 1500));
       } catch (err) {
-        statusEl.textContent = "⚠️ Ad failed/timed out — closing...";
+        const timedOut = String(err?.message || "").includes("timeout");
+        statusEl.textContent = timedOut
+          ? "⚠️ Ad timed out — closing..."
+          : "⚠️ Ad failed or needs a tap — tap to retry.";
         console.warn(err);
         running = false;
         btn.disabled = false;
-        // Auto-close stuck ads after the timeout window.
-        if (tg) setTimeout(() => tg.close(), 1200);
+        btn.textContent = watched >= ADS_REQUIRED ? "✅ All ads watched!" : "▶️ Watch Ads";
+        // User closes the page manually.
         return;
       }
     }
@@ -122,8 +125,7 @@
     running = false;
     btn.disabled = true;
     btn.textContent = "✅ All ads watched!";
-    statusEl.textContent = "Closing...";
-    if (tg) setTimeout(() => tg.close(), 1200);
+    statusEl.textContent = "All ads done — you can close this page.";
   }
 
   btn.addEventListener("click", runAds);
